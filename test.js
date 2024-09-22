@@ -5,61 +5,46 @@ function test() {
   const sheet = ss.getSheetByName("Sheet1");
   let messages = [];
 
-  const userMessage = "予定";
-    if (userMessage === "予定+時間割") {
-      messages.push(get_schedules(sheet));
-      messages = messages.concat(get_images(sheet));
-    }else if (userMessage === "予定") {
-      messages.push(get_schedules(sheet));
-    }else if (userMessage === "時間割") {
-      messages = messages.concat(get_images(sheet));
-    }else{
-      return false;
-    };
-    console.log(messages)
+  messages.push(get_news(sheet));
+  console.log(messages)
 }
 
-function test2() {
-  // LINEの情報取得
-    const ss =SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("ID"));
-    const sheet = ss.getSheetByName("Sheet1");
-    let messages = [];
+// function get_news(sheet) {
+//   try{
+//     // スプレッドシートからURL取得
+//     const ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("ID"));
+//     const sheet = ss.getSheetByName("Sheet1");
 
-    // 画像,予定等取得
-    const userMessage = message.text;
-    if (userMessage == "予定+時間割") {
-      messages.push(get_schedules(sheet));
-      messages = messages.concat(get_images(sheet));
-    }else if (userMessage == "予定") {
-      messages.push(get_schedules(sheet));
-    }else if (userMessage == "時間割") {
-      messages = messages.concat(get_images(sheet));
-    }else if (userMessage == "月間予定"){
-      messages.push({
-        "type": "text",
-        "text": sheet.getRange("D6").getValue().replace(" ", "")
-      });
-    }else{
-      return false;
-    };
+//     // 直近のニュースを5件取得
+//     const news_all = sheet.getRange("E6").getValue().split("\n").slice(0, 5);
 
-    // APIリクエスト時にセットするペイロード値設定
-    const payload = {
-      "replyToken": "a",
-      "messages": messages
-    };
-    //HTTPSのPOST時のオプションパラメータ設定
-    const options = {
-      "payload" : JSON.stringify(payload),
-      "myamethod"  : "POST",
-      "headers" : {"Authorization": `Bearer ${PropertiesService.getScriptProperties().getProperty("TOKEN")}`},
-      "contentType" : "application/json"
-    };
-    console.log(options)
-}
+//     // カラム作成
+//     const columns = [];
+//     for (let i = 0; i < news_all.length; i++){
+//       let txt = {
+//         "text": news_all[i].slice(0,100),
+//         "actions": [
+//           {
+//             "type": "uri",
+//             "label": "詳細を見る",
+//             "uri": "https://www.mito1-h.ibk.ed.jp/"
+//             }]};
+//       columns.push(txt);
+//     };
 
-function test3() {
-  const ss =SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("ID"));
-  const sheet = ss.getSheetByName("Sheet1");
-  console.log(get_schedules(sheet));
-}
+//     // message作成
+//     const news = {
+//       "type": "template",
+//       "altText": "直近のニュース5件",
+//       "template": {
+//         "type": "carousel",
+//         "columns": columns,
+//       }
+//     };
+
+//     console.log(news)
+//     return news;
+//   }catch(e){
+//     return [error(e.stack)];
+//   };
+// }

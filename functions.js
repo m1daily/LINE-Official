@@ -1,3 +1,4 @@
+// 次の予定取得
 function get_schedules(sheet) {
   try{
     // 予定取得
@@ -62,10 +63,12 @@ function get_schedules(sheet) {
   };
 }
 
-function get_images(sheet) {
+
+// 時間割画像取得
+function get_images(sheet, cell) {
   try{
     const images = [];
-    const image_urls = sheet.getRange("C6").getValue().replace(" ", "").split("\n");
+    const image_urls = sheet.getRange(cell).getValue().replace(" ", "").split("\n");
     for (let i = 0; i < image_urls.length; i++){
       let image = {
             "type": "image",
@@ -80,19 +83,159 @@ function get_images(sheet) {
   };
 }
 
-function sat(sheet) {
+
+// ニュース取得
+function get_news(sheet) {
   try{
-    const sat_image = sheet.getRange("C7").getValue();
-    return {
-            "type": "image",
-            "originalContentUrl": sat_image,
-            "previewImageUrl": sat_image
+    // 直近のニュースを5件取得
+    const news_all = sheet.getRange("E6").getValue().split("\n").slice(0, 5);
+
+    // カラム作成
+    const columns = [];
+    const url = {
+      "部活動の紹介": "https://www.mito1-h.ibk.ed.jp/f3f2a48def04f2d9c4586f42bda6b409/%E5%AD%A6%E6%A0%A1%E7%94%9F%E6%B4%BB/%E9%83%A8%E6%B4%BB%E5%8B%95%E7%B4%B9%E4%BB%8B",
+      "部活動ニュース": "https://www.mito1-h.ibk.ed.jp/f3f2a48def04f2d9c4586f42bda6b409/%E5%AD%A6%E6%A0%A1%E7%94%9F%E6%B4%BB/%E9%83%A8%E6%B4%BB%E5%8B%95%E3%83%8B%E3%83%A5%E3%83%BC%E3%82%B9",
+      "医学コースについて": "https://www.mito1-h.ibk.ed.jp/%E5%8C%BB%E5%AD%A6%E3%82%B3%E3%83%BC%E3%82%B9%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6/%E5%8C%BB%E5%AD%A6%E3%82%B3%E3%83%BC%E3%82%B9%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6/%E5%8C%BB%E5%AD%A6%E3%82%B3%E3%83%BC%E3%82%B9%E3%81%AE%E5%AE%9F%E8%B7%B5",
+      "水戸一高の風景": "https://www.mito1-h.ibk.ed.jp/%E6%B0%B4%E6%88%B8%E4%B8%80%E9%AB%98%E3%81%AE%E9%A2%A8%E6%99%AF",
+    }
+    for (let i = 0; i < news_all.length; i++){
+      let label = "詳細を見る"
+      let uri = "https://www.mito1-h.ibk.ed.jp/#frame-587"
+      for (let key in url){
+        if (news_all[i].includes(key)) {
+          label = key
+          uri = url[key]
+        };
+      };
+      let txt = {
+        "imageBackgroundColor": "#FFFFFF",
+        "text": news_all[i].slice(0,100),
+        "actions": [
+          {
+            "type": "uri",
+            "label": label,
+            "uri": uri
+          }
+        ]
+      };
+      columns.push(txt);
+      console.log(txt)
     };
+
+    // message作成
+    const news = {
+      "type": "template",
+      "altText": "直近のニュース5件",
+      "template": {
+        "type": "carousel",
+        "columns": columns
+      }
+    };
+    return news;
   }catch(e){
-    return error(e.stack);
+    return [error(e.stack)];
   };
 }
 
+
+// SNSリンク集の取得
+function get_sns() {
+  try{
+    // サービス名, 画像URL, リンク
+    const sns_all = [
+      ["Twitter", "https://cdn-icons-png.flaticon.com/512/124/124021.png", "詳細を見る", "https://x.com/mito1daily"],
+      ["Instagram", "https://cdn-icons-png.flaticon.com/512/15713/15713420.png", "詳細を見る", "https://www.instagram.com/mito1daily/"],
+      ["Discord", "", "詳細を見る", ""]
+      ["GoogleForm", "", "お問い合わせ", ""]
+    ];
+
+    // カラム作成
+    const columns = [];
+    for (let i = 0; i < sns_all.length; i++){
+      let txt = {
+        "thumbnailImageUrl": sns_all[i][1],
+        "imageBackgroundColor": "#FFFFFF",
+        "text": sns_all[i][0],
+        "actions": [
+          {
+            "type": "uri",
+            "label": sns_all[i][2],
+            "uri": sns_all[i][3],
+          }
+        ]
+      };
+      columns.push(txt);
+    };
+
+    // message作成
+    const sns = {
+      "type": "template",
+      "altText": "SNS",
+      "template": {
+        "type": "carousel",
+        "columns": columns
+      },
+      "imageAspectRatio": "square",
+      "imageSize": "cover"
+    };
+    return sns;
+  }catch(e){
+    return [error(e.stack)];
+  };
+}
+
+
+// 辞書からランダムに単語と意味取得
+function get_word() {
+  try{
+    // 辞書データ取得
+    const ss =SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("DICT"));
+    const sheet = ss.getSheetByName("フォームの回答 1");
+    const rows = sheet.getLastRow();
+    console.log(rows);
+
+    // 乱数生成,単語取得
+    const num = Math.floor(Math.random()*rows)+1;
+    const words = sheet.getRange(num, 1, 1, 5).getValues()[0];
+    const time = Utilities.formatDate(words[0], "JST", "yy/MM/dd HH:mm");
+
+    // message作成
+    let mes = `単語: ${words[1]} (${num}/${rows})\n品詞: ${words[2]}\n意味: ${words[3]}`;
+    if (words[4] != ""){
+      mes = mes + `\n補足: ${words[4]}`
+    };
+    const txt = {
+      "type": "text",
+      "text": mes + `\n\n作成日: ${time}`
+    };
+    return txt;
+  }catch(e){
+    return [error(e.stack)];
+  };
+}
+
+
+// スプレッドシートから情報取得
+function get_info(cell) {
+  try{
+    // 辞書データ取得
+    const ss =SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("DEBUG"));
+    const sheet = ss.getSheetByName("Messages");
+    const info = sheet.getRange(cell).getValue();
+
+    // message作成
+    const txt = {
+      "type": "text",
+      "text": info
+    };
+    return txt;
+  }catch(e){
+    return [error(e.stack)];
+  };
+}
+
+
+// エラーのテスト
 function error_test() {
   try{
     throw new Error("error_test");
@@ -101,6 +244,8 @@ function error_test() {
   };
 }
 
+
+// エラーメッセージ
 function error(error_message) {
   debug(error_message);
   return {
@@ -109,6 +254,8 @@ function error(error_message) {
   };
 }
 
+
+// スプレッドシートに出力
 function debug(value) {
   const sheet = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("DEBUG"));
   const ss = sheet.getSheetByName("Schedules");
