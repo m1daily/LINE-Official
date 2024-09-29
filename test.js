@@ -5,7 +5,7 @@ function test() {
   const sheet = ss.getSheetByName("Sheet1");
   let messages = [];
 
-  messages.push(get_news(sheet));
+  messages.push(get_themes(true));
   console.log(messages)
 }
 

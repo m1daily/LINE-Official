@@ -8,17 +8,17 @@ function get_schedules(sheet) {
     // 現在の月日取得
     const time = new Date();
     const m = time.getMonth() + 1;
-    const d = time.getDate();    
+    const d = time.getDate();
 
     // 日付と予定のデータを整理
     const days = [];
     const schedules = [];
-    
+
     for (let i = 0; i < monthData.length; i++) {
       let dayData = monthData[i];
       let dayParts = dayData.split(")");
       let yotei = [];
-      
+
       for (let n = 0; n < dayParts.length; n++) {
         // 日付の場合「)」を追加
         if (dayParts.length - n > 1) {
@@ -32,7 +32,7 @@ function get_schedules(sheet) {
       };
       schedules.push(yotei.join(""));
     };
-    
+
     // スプレッドシートの予定の月と現在の月が一致しないなら終了
     if (month != String(m)) {
       return {
@@ -229,6 +229,119 @@ function get_info(cell) {
       "text": info
     };
     return txt;
+  }catch(e){
+    return [error(e.stack)];
+  };
+}
+
+
+// テーマ取得
+function get_themes(get_array) {
+  try{
+    // 全てのテーマ取得
+    const ss =SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("DEBUG"));
+    const sheet = ss.getSheetByName("Themes");
+    const rows = sheet.getLastRow();
+    const themes_all = sheet.getRange(3, 2, rows - 2, 4).getValues();
+    console.log(themes_all);
+    if (get_array) {
+      return themes_all;
+    };
+
+    // カラム作成
+    const columns = [];
+    for (let i = 0; i < themes_all.length; i++){
+      const theme = themes_all[i];
+      let txt = {
+        "thumbnailImageUrl": theme[2],
+        "imageBackgroundColor": "#FFFFFF",
+        "text": theme[1],
+        "actions": [
+          {
+            "type": "postback",
+            "label": "このテーマに変更",
+            "data": `themechanged-${theme[0]}`,
+            "inputOption": "openRichMenu"
+          }
+        ]
+      };
+      columns.push(txt);
+      console.log(txt);
+    };
+
+    // message作成
+    const themes = {
+      "type": "template",
+      "altText": "テーマ一覧",
+      "template": {
+        "type": "carousel",
+        "columns": columns,
+        "imageAspectRatio": "rectangle",
+        "imageSize": "cover"
+      }
+    };
+    console.log(themes)
+    return themes;
+  }catch(e){
+    return [error(e.stack)];
+  };
+}
+
+
+// テーマ変更
+function change_theme(name, user_id) {
+  try{
+    // テーマ名からリッチメニューIDを取得
+    const theme_name = name;
+    const theme_all = get_themes(true);
+    let i = 0;
+    while (theme_name != theme_all[i][0]){
+      i = i + 1;
+      if (theme_all.length === i) {
+        return false
+      };
+    };
+    const theme_id = theme_all[i][3];
+
+    // リッチメニューとユーザーをリンク
+    const theme_options = {
+      "method"  : "POST",
+      "headers" : {"Authorization": `Bearer ${PropertiesService.getScriptProperties().getProperty("TOKEN")}`}
+    };
+    UrlFetchApp.fetch(`https://api.line.me/v2/bot/user/${user_id}/richmenu/${theme_id}`, theme_options);
+    return false;
+  }catch(e){
+    return [error(e.stack)];
+  };
+};
+
+
+// メッセージのテスト
+// スプレッドシートから情報取得
+function get_test(cell, type) {
+  try{
+    // 辞書データ取得
+    const ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("DEBUG"));
+    const sheet = ss.getSheetByName("Test");
+    const test = sheet.getRange(cell).getValue();
+
+    // message作成
+    let mes = ""
+    if (type === "text"){
+      mes = {
+        "type": "text",
+        "text": test
+      };
+    } else if (type === "image") {
+      mes = {
+        "type": "image",
+        "originalContentUrl": test,
+        "previewImageUrl": test
+      };
+    } else {
+      return false;
+    };
+    return mes;
   }catch(e){
     return [error(e.stack)];
   };

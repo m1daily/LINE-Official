@@ -40,6 +40,12 @@ function doPost(e) {
     case "ニュース":
       messages.push(get_news(sheet));
       break;
+    case "テーマ":
+      messages.push(get_themes(false));
+      break;
+    case userMessage.startsWith("themechanged") && userMessage:
+      change_theme(userMessage.split("-")[1], json.events[0].source.userId);
+      return false;
     case "辞書":
       messages.push(get_word());
       break;
@@ -55,6 +61,10 @@ function doPost(e) {
     case "error175":
       messages.push(error_test());
       debug("エラーテスト");
+      break;
+    case userMessage.startsWith("testdesu") && userMessage:
+      const command = userMessage.split(" ");
+      messages.push(get_test(command[1],command[2]));
       break;
     default:
       return false;
